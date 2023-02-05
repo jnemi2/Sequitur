@@ -1,6 +1,7 @@
 
 string = "esto es español de españa"
-#string = "aaaaaaaaaa"
+#string = "aaaaaaaaaaa"
+#string = "abababab"
 
 rule_next_id = 1
 
@@ -35,6 +36,19 @@ def enforce_rule_utility(useless_rule_symbol, reference_rule_symbol):
     del rules[useless_rule_symbol]
 
 
+def overlap(digram_index, rule1_symbol, rule2_symbol):
+    if rule1_symbol != rule2_symbol:
+        return False
+    rule1 = rules[rule1_symbol]
+    digram = (rule1[1][digram_index], rule1[1][digram_index + 1])
+    rule2 = rules[rule2_symbol]
+    for i in range(len(rule2[1]) - 1):
+        if rule2[1][i] == digram[0]:
+            if rule2[1][i+1] == digram[1]:
+                return abs(digram_index - i) < 2
+    return None
+
+
 def link(rule_symbol, first_index):
     global rule_next_id
     rule = rules[rule_symbol]
@@ -48,83 +62,84 @@ def link(rule_symbol, first_index):
         other_non_terminal = digrams[digram]
         other_rule = rules[other_non_terminal]
 
-        if len(other_rule[1]) == 2:  # Use existing rule
-            rh.pop(first_index)
-            rh.pop(first_index)
-            if first_index > 0:
-                context_left = rh[first_index - 1]
-                digrams.pop((context_left, digram[0]))
-                #digrams[(context_left, (other_non_terminal,))] = rule_symbol
-                #link(rule_symbol, first_index - 1)
-            if first_index < len(rh) - 1:
-                context_right = rh[first_index]
-                digrams.pop((digram[1], context_right))
-                #digrams[((other_non_terminal,0), context_right)] = rule_symbol
-                #link(rule_symbol, first_index)
-            rh.insert(first_index, (other_non_terminal, ))
-            other_rule[0] += 1
-            if first_index > 0:
-                link(rule_symbol, first_index - 1)
-            if first_index < len(rh) - 1:
-                link(rule_symbol, first_index)
+        if not overlap(first_index, rule_symbol, other_non_terminal):
+            if len(other_rule[1]) == 2:  # Use existing rule
+                rh.pop(first_index)
+                rh.pop(first_index)
+                if first_index > 0:
+                    context_left = rh[first_index - 1]
+                    digrams.pop((context_left, digram[0]))
+                    #digrams[(context_left, (other_non_terminal,))] = rule_symbol
+                    #link(rule_symbol, first_index - 1)
+                if first_index < len(rh) - 1:
+                    context_right = rh[first_index]
+                    digrams.pop((digram[1], context_right))
+                    #digrams[((other_non_terminal,0), context_right)] = rule_symbol
+                    #link(rule_symbol, first_index)
+                rh.insert(first_index, (other_non_terminal, ))
+                other_rule[0] += 1
+                if first_index > 0:
+                    link(rule_symbol, first_index - 1)
+                if first_index < len(rh) - 1:
+                    link(rule_symbol, first_index)
 
-        else:  # Create new rule
-            new_rule = [2, [digram[0], digram[1]]]
-            new_rule_id = rule_next_id
-            rule_next_id += 1
-            rules[new_rule_id] = new_rule
-            rh.pop(first_index)
-            rh.pop(first_index)
-            if first_index > 0:
-                context_left = rh[first_index - 1]
-                digrams.pop((context_left, digram[0]))
-                #digrams[(context_left, (new_rule_id,))] = rule_symbol
-            if first_index < len(rh) - 1:
-                context_right = rh[first_index]
-                digrams.pop((digram[1], context_right))
-                #digrams[((new_rule_id,0), context_right)] = rule_symbol
+            else:  # Create new rule
+                new_rule = [2, [digram[0], digram[1]]]
+                new_rule_id = rule_next_id
+                rule_next_id += 1
+                rules[new_rule_id] = new_rule
+                rh.pop(first_index)
+                rh.pop(first_index)
+                if first_index > 0:
+                    context_left = rh[first_index - 1]
+                    digrams.pop((context_left, digram[0]))
+                    #digrams[(context_left, (new_rule_id,))] = rule_symbol
+                if first_index < len(rh) - 1:
+                    context_right = rh[first_index]
+                    digrams.pop((digram[1], context_right))
+                    #digrams[((new_rule_id,0), context_right)] = rule_symbol
 
-            rh.insert(first_index, (new_rule_id,))
-            if first_index > 0:
-                link(rule_symbol, first_index - 1)
-            if first_index < len(rh) - 1:
-                link(rule_symbol, first_index)
+                rh.insert(first_index, (new_rule_id,))
+                if first_index > 0:
+                    link(rule_symbol, first_index - 1)
+                if first_index < len(rh) - 1:
+                    link(rule_symbol, first_index)
 
-            for i in range(len(other_rule[1])):
-                if other_rule[1][i] == digram[0]:
-                    if other_rule[1][i + 1] == digram[1]:
-                        other_rule[1].pop(i)
-                        if i > 0:
-                            other_context_left = other_rule[1][i-1]
-                            if (other_context_left, digram[0]) in digrams:
-                                digrams.pop((other_context_left, digram[0]))
-                            #digrams[(other_context_left, (new_rule_id,))] = other_non_terminal
-                        if i < len(other_rule[1]) - 1:
-                            other_context_right = other_rule[1][i+1]
-                            if (digram[1], other_context_right) in digrams:
-                                digrams.pop((digram[1], other_context_right))
-                            #digrams[((new_rule_id,), other_context_right)] = other_non_terminal
+                for i in range(len(other_rule[1])):
+                    if other_rule[1][i] == digram[0]:
+                        if other_rule[1][i + 1] == digram[1]:
+                            other_rule[1].pop(i)
+                            if i > 0:
+                                other_context_left = other_rule[1][i-1]
+                                if (other_context_left, digram[0]) in digrams:
+                                    digrams.pop((other_context_left, digram[0]))
+                                #digrams[(other_context_left, (new_rule_id,))] = other_non_terminal
+                            if i < len(other_rule[1]) - 1:
+                                other_context_right = other_rule[1][i+1]
+                                if (digram[1], other_context_right) in digrams:
+                                    digrams.pop((digram[1], other_context_right))
+                                #digrams[((new_rule_id,), other_context_right)] = other_non_terminal
 
-                        other_rule[1][i] = (new_rule_id,)
+                            other_rule[1][i] = (new_rule_id,)
 
-                        if i > 0:
-                            link(other_non_terminal, i - 1)
-                        if i < len(other_rule[1]) - 1:
-                            link(other_non_terminal, i)
+                            if i > 0:
+                                link(other_non_terminal, i - 1)
+                            if i < len(other_rule[1]) - 1:
+                                link(other_non_terminal, i)
 
-                        break
+                            break
 
-            digrams[digram] = new_rule_id  # update reference in hash table
+                digrams[digram] = new_rule_id  # update reference in hash table
 
-        # reduce reference number in both symbols of the replaced digram if they are non-terminals
-        if type(digram[0]) is tuple:
-            rules[digram[0][0]][0] -= 1
-            if rules[digram[0][0]][0] <= 1:
-                enforce_rule_utility(digram[0][0], new_rule_id)
-        if type(digram[1]) is tuple:
-            rules[digram[1][0]][0] -= 1
-            if rules[digram[1][0]][0] <= 1:
-                enforce_rule_utility(digram[1][0], new_rule_id)
+            # reduce reference number in both symbols of the replaced digram if they are non-terminals
+            if type(digram[0]) is tuple:
+                rules[digram[0][0]][0] -= 1
+                if rules[digram[0][0]][0] <= 1:
+                    enforce_rule_utility(digram[0][0], new_rule_id)
+            if type(digram[1]) is tuple:
+                rules[digram[1][0]][0] -= 1
+                if rules[digram[1][0]][0] <= 1:
+                    enforce_rule_utility(digram[1][0], new_rule_id)
 
     else:
         digrams[digram] = rule_symbol  # Insert digram in hash table
