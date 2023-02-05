@@ -1,9 +1,6 @@
-#string = "esto es español de españa"
-string = "aaaaaaaaaa"
 
-def to_tuple(lst):
-    return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
-
+string = "esto es español de españa"
+#string = "aaaaaaaaaa"
 
 rule_next_id = 1
 
@@ -126,7 +123,7 @@ def link(rule_symbol, first_index):
                 enforce_rule_utility(digram[0][0], new_rule_id)
         if type(digram[1]) is tuple:
             rules[digram[1][0]][0] -= 1
-            if rules[digram[0][0]][0] <= 1:
+            if rules[digram[1][0]][0] <= 1:
                 enforce_rule_utility(digram[1][0], new_rule_id)
 
     else:
