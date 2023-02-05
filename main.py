@@ -1,5 +1,5 @@
-string = "esto es español de españa"
-
+#string = "esto es español de españa"
+string = "aaa"
 
 def to_tuple(lst):
     return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
@@ -54,6 +54,14 @@ def link(rule_symbol, first_index):
         if len(other_rule[1]) == 2:  # Use existing rule
             rh.pop(first_index)
             rh.pop(first_index)
+            if first_index > 0:
+                context_left = rh[first_index - 1]
+                digrams.pop((context_left, digram[0]))
+                digrams[(context_left, (other_non_terminal,))] = rule_symbol
+            if first_index < len(rh) - 1:
+                context_right = rh[first_index]
+                digrams.pop((digram[1], context_right))
+                digrams[((other_non_terminal,0), context_right)] = rule_symbol
             rh.insert(first_index, (other_non_terminal, ))
             other_rule[0] += 1
         else:  # Create new rule
@@ -120,3 +128,4 @@ else:
         link("S", len(S[1]) - 2)
 
 print(rules)
+print(digrams)
