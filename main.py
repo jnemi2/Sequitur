@@ -133,10 +133,10 @@ def link(rule_symbol, first_index):
 if len(string) < 2:
     S[1] = list(string)
 else:
-    S[1] = list(string[0:2])
-    digrams[(S[1][0], S[1][1])] = "S"
+    S[1] = list(string[0:1])
+    #digrams[(S[1][0], S[1][1])] = "S"
 
-    for n in string[2:]:
+    for n in string[1:]:
         digram = (S[1][len(S[1]) - 1], n)
         S[1].append(n)
         link("S", len(S[1]) - 2)
