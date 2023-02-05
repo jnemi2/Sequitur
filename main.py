@@ -1,5 +1,5 @@
 #string = "esto es español de españa"
-string = "aaa"
+string = "aaaaaaaaaa"
 
 def to_tuple(lst):
     return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
@@ -57,13 +57,20 @@ def link(rule_symbol, first_index):
             if first_index > 0:
                 context_left = rh[first_index - 1]
                 digrams.pop((context_left, digram[0]))
-                digrams[(context_left, (other_non_terminal,))] = rule_symbol
+                #digrams[(context_left, (other_non_terminal,))] = rule_symbol
+                #link(rule_symbol, first_index - 1)
             if first_index < len(rh) - 1:
                 context_right = rh[first_index]
                 digrams.pop((digram[1], context_right))
-                digrams[((other_non_terminal,0), context_right)] = rule_symbol
+                #digrams[((other_non_terminal,0), context_right)] = rule_symbol
+                #link(rule_symbol, first_index)
             rh.insert(first_index, (other_non_terminal, ))
             other_rule[0] += 1
+            if first_index > 0:
+                link(rule_symbol, first_index - 1)
+            if first_index < len(rh) - 1:
+                link(rule_symbol, first_index)
+
         else:  # Create new rule
             new_rule = [2, [digram[0], digram[1]]]
             new_rule_id = rule_next_id
@@ -74,13 +81,18 @@ def link(rule_symbol, first_index):
             if first_index > 0:
                 context_left = rh[first_index - 1]
                 digrams.pop((context_left, digram[0]))
-                digrams[(context_left, (new_rule_id,))] = rule_symbol
+                #digrams[(context_left, (new_rule_id,))] = rule_symbol
             if first_index < len(rh) - 1:
                 context_right = rh[first_index]
                 digrams.pop((digram[1], context_right))
-                digrams[((new_rule_id,0), context_right)] = rule_symbol
+                #digrams[((new_rule_id,0), context_right)] = rule_symbol
 
             rh.insert(first_index, (new_rule_id,))
+            if first_index > 0:
+                link(rule_symbol, first_index - 1)
+            if first_index < len(rh) - 1:
+                link(rule_symbol, first_index)
+
             for i in range(len(other_rule[1])):
                 if other_rule[1][i] == digram[0]:
                     if other_rule[1][i + 1] == digram[1]:
@@ -89,14 +101,19 @@ def link(rule_symbol, first_index):
                             other_context_left = other_rule[1][i-1]
                             if (other_context_left, digram[0]) in digrams:
                                 digrams.pop((other_context_left, digram[0]))
-                            digrams[(other_context_left, (new_rule_id,))] = other_non_terminal
+                            #digrams[(other_context_left, (new_rule_id,))] = other_non_terminal
                         if i < len(other_rule[1]) - 1:
                             other_context_right = other_rule[1][i+1]
                             if (digram[1], other_context_right) in digrams:
                                 digrams.pop((digram[1], other_context_right))
-                            digrams[((new_rule_id,), other_context_right)] = other_non_terminal
+                            #digrams[((new_rule_id,), other_context_right)] = other_non_terminal
 
                         other_rule[1][i] = (new_rule_id,)
+
+                        if i > 0:
+                            link(other_non_terminal, i - 1)
+                        if i < len(other_rule[1]) - 1:
+                            link(other_non_terminal, i)
 
                         break
 
