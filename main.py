@@ -13,6 +13,29 @@ digrams = {}
 S = rules["S"]
 
 
+def enforce_rule_utility(useless_rule_symbol, reference_rule_symbol):
+    useless_rule = rules[useless_rule_symbol]
+    reference_rule = rules[reference_rule_symbol]
+    ref_index = reference_rule.index((useless_rule_symbol, ))
+    length = len(useless_rule[1])
+
+    # updating digram reference in hash table
+    for i in range(len(useless_rule[1]) - 1):
+        digrams[(useless_rule[1][i], useless_rule[1][i+1])] = reference_rule_symbol
+
+    # deriving right-hand rule
+    reference_rule[1].pop(ref_index)
+    useless_rule.reverse()
+    for i in useless_rule:
+        reference_rule[1].insert(ref_index, i)
+
+    # updating context
+    if ref_index > 0:
+        link(reference_rule_symbol, ref_index - 1)
+    if ref_index + length <= len(reference_rule):
+        link(reference_rule_symbol, ref_index + length - 1)
+
+
 def link(rule_symbol, first_index):
     global rule_next_id
     rule = rules[rule_symbol]
@@ -30,6 +53,7 @@ def link(rule_symbol, first_index):
         else:  # Create new rule
             rh.pop(first_index)
             rh.pop(first_index)
+            
             new_rule = [2, [digram[0], digram[1]]]
             new_rule_id = rule_next_id
             rule_next_id += 1
@@ -61,12 +85,6 @@ def link(rule_symbol, first_index):
 
             digrams[digram] = new_rule_id  # update reference in hash table
 
-        # reduce reference number in both symbols of the replaced digram if they are non-terminals
-        if type(digram[0]) is tuple:
-            rules[digram[0][0]][0] -= 1
-        if type(digram[1]) is tuple:
-            rules[digram[1][0]][0] -= 1
-
         # update context of this rule
         if first_index > 0:
             context_left = rh[first_index - 1]
@@ -80,6 +98,17 @@ def link(rule_symbol, first_index):
             if temp in digrams:
                 digrams.pop(temp)
                 link(rule_symbol, first_index)
+
+        # reduce reference number in both symbols of the replaced digram if they are non-terminals
+        if type(digram[0]) is tuple:
+            rules[digram[0][0]][0] -= 1
+            if rules[digram[0][0]][0] <= 1:
+                enforce_rule_utility(digram[0][0], rule_symbol)
+        if type(digram[1]) is tuple:
+            rules[digram[1][0]][0] -= 1
+            if rules[digram[0][0]][0] <= 1:
+                enforce_rule_utility(digram[1][0], rule_symbol)
+
     else:
         digrams[digram] = rule_symbol  # Insert digram in hash table
 
